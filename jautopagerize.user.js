@@ -11,6 +11,7 @@
 // @require     http://gist.github.com/3239.txt#createElementFromString
 // @require     http://gist.github.com/46391.txt#duration
 // @require     http://gist.github.com/49453.txt#createHTMLDocument
+// @require     http://gist.github.com/49885.txt#resetStyle
 // ==/UserScript==
 // This script uses JavaScript 1.6 and 1.8 functions:
 //    Array.prototype.{filter,forEach,map,reduce} etc...

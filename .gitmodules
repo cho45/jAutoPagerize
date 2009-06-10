@@ -10,3 +10,6 @@
 [submodule "snippets/dollarX"]
 	path = snippets/dollarX
 	url = git://gist.github.com/3238.git
+[submodule "snippets/resetStyle"]
+	path = snippets/resetStyle
+	url = git://gist.github.com/49885.git
