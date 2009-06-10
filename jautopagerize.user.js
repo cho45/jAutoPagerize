@@ -24,7 +24,7 @@ if (window != window.parent) return;
 if (document.contentType.indexOf("html") == -1) return;
 
 AutoPagerize = {};
-AutoPagerize.VERSION = "jAutoPagerize $Rev: 33889 $";
+AutoPagerize.VERSION = "jAutoPagerize $Rev: 33889+? $";
 AutoPagerize.Config  = {
 	  site_info_urls : [
 		  { format : 'JSON', url : 'http://wedata.net/databases/AutoPagerize/items.json' }
