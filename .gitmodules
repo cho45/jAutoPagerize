@@ -1,0 +1,9 @@
+[submodule "snippets/createElementFromString"]
+	path = snippets/createElementFromString
+	url = git://gist.github.com/3239.git
+[submodule "snippets/duration"]
+	path = snippets/duration
+	url = git://gist.github.com/46391.git
+[submodule "snippets/createHTMLDocument"]
+	path = snippets/createHTMLDocument
+	url = git://gist.github.com/49453.git
