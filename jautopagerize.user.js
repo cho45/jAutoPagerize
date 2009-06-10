@@ -134,29 +134,6 @@ function getHTMLResource (uri) {
 	}, true);
 	return d;
 }
-getHTMLResource.createDocumentFromString = function (s) {
-	var elements = /<(script|i?frame|object)[ \t\r\n<>][\S\s]*?<\/\1(?:[ \t\r\n]*>|[ \t\r\n]+)/;
-	var tags     = /<\/?(?:html)(?:[ \t\r\n][^<>]*(?:>|(?=<))|[ \t\r\n]*>)/;
-
-	s = String(s).replace(RegExp([elements.source, tags.source].join("|"), "gi"), function (_) {
-		return "<textarea class='_autopagerize_hidden_element' title='_autopagerize_hidden_element'>" + _ + "</textarea>";
-	});
-	var d = createHTMLDocument();
-	if (d) {
-		var child, root = d.documentElement;
-		while ((child = root.firstChild)) root.removeChild(child);
-		var r = d.createRange();
-		r.selectNodeContents(root);
-		root.appendChild(r.createContextualFragment(s));
-		return d;
-	} else {
-		log("fallback: use div to parse HTML");
-		$X.forceRelative = true;
-		d = document.createElement("div");
-		d.innerHTML = s;
-		return d;
-	}
-};
 
 function getCachedResource (uri, convertfun, expire) {
 	var d   = Deferred();
