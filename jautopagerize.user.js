@@ -5,14 +5,23 @@
 // @include     http://*
 // @include     https://*
 // @exclude     http://b.hatena.ne.jp/*
+// @require     http://svn.coderepos.org/share/lang/javascript/jsdeferred/trunk/jsdeferred.userscript.js
+// @require     http://svn.coderepos.org/share/lang/javascript/jsenumerator/trunk/jsenumerator.nodoc.js
+// @require     http://gist.github.com/3239.txt#createElementFromString
+// @require     http://gist.github.com/46391.txt#duration
+// @require     http://gist.github.com/49453.txt#createHTMLDocument
 // ==/UserScript==
 // This script uses JavaScript 1.6 and 1.8 functions:
 //    Array.prototype.{filter,forEach,map,reduce} etc...
 //
-// $Date: 2009-06-11 01:57:00 +0900 (木, 11  6 2009) $
 (function (AutoPagerize) { with (D()) {
 // Latest::  http://svn.coderepos.org/share/lang/javascript/userscripts/jautopagerize.user.js
 // License:: CCPL ( http://creativecommons.org/licenses/by/3.0/ )
+//
+$E = createElementFromString;
+$A = Enumerator;
+if (window != window.parent) return;
+if (document.contentType.indexOf("html") == -1) return;
 
 AutoPagerize = {};
 AutoPagerize.VERSION = "jAutoPagerize $Rev: 33889 $";
@@ -102,11 +111,6 @@ window.AutoPagerize = {
 	VERSION   : AutoPagerize.VERSION,
 	addFilter : AutoPagerize.addFilter
 };
-
-if (window != window.parent) return;
-if (document.contentType.indexOf("html") == -1) return;
-BeCompatible();
-$E = createElementFromString;
 
 function getResource (uri, convertfun) {
 	var d = Deferred();
@@ -842,52 +846,6 @@ function BeCompatible () {
 }
 
 
-/**
- * template functions
- */
-function createHTMLDocument (title) {
-	// Firefox doesn't have createHTMLDocument
-	if (!document.implementation.createHTMLDocument) {
-		// Maybe this is the best way to create HTMLDocument, but not worked in any browser...
-		// var html4dt = document.implementation.createDocumentType("HTML", "-//W3C//DTD HTML 4.01//EN", "http://www.w3.org/TR/html4/strict.dtd");
-		// var d = document.implementation.createDocument("", "HTML", html4dt);
-		// return d;
-
-		// In Firefox
-		// Try to create HTMLDocument from XSLT with <xsl:output method='html'/>
-		if (typeof XSLTProcessor != "undefined") {
-			// Using createContextualFragment to avoid https://bugzilla.mozilla.org/show_bug.cgi?id=212362
-			// (problem of URI of document created by DOMParser and XSLT URI)
-			var x = new XSLTProcessor();
-			var t = [
-				"<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>",
-					"<xsl:output method='html'/>",
-					"<xsl:template match='/'>",
-						"<html><head><title>", title, "</title></head><body/></html>",
-					"</xsl:template>",
-				"</xsl:stylesheet>",
-			].join("");
-			var d = document.implementation.createDocument("", "nice-boat", null);
-			var r = d.createRange();
-			r.selectNodeContents(d.documentElement);
-			try {
-				d.documentElement.appendChild(r.createContextualFragment(t));
-			} catch(e) {
-				// TODO: Firefox 2.0.0.10 does not work on this part.
-				return null;
-			}
-			x.importStylesheet(d.documentElement.firstChild);
-			var ret = x.transformToDocument(d);
-			// if the returned value is not HTMLDocument, this function returns null.
-			return ret.body ? ret : null;
-		} else {
-			return null;
-		}
-	} else {
-		return document.implementation.createHTMLDocument(title);
-	}
-}
-
 function absoluteURI (uri) {
 	if (uri.indexOf("http://") != 0) {
 		// resolve relative path; for Safari
@@ -898,54 +856,6 @@ function absoluteURI (uri) {
 	}
 	return uri;
 }
-
-
-
-function createElementFromString (str, opts) {
-	if (!opts) opts = { data: {} };
-	if (!opts.data) opts.data = { };
-
-	var t, cur = opts.parent || document.createDocumentFragment(), root, stack = [cur];
-	while (str.length) {
-		if (str.indexOf("<") == 0) {
-			if ((t = str.match(/^\s*<(\/?[^\s>\/]+)([^>]+?)?(\/)?>/))) {
-				var tag = t[1], attrs = t[2], isempty = !!t[3];
-				if (tag.indexOf("/") == -1) {
-					child = document.createElement(tag);
-					if (attrs) attrs.replace(/([a-z]+)=(?:'([^']+)'|"([^"]+)")/gi,
-						function (m, name, v1, v2) {
-							var v = text(v1 || v2);
-							if (name == "class" && root) root[v] = child;
-							child.setAttribute(name, v);
-						}
-					);
-					cur.appendChild(root ? child : (root = child));
-					if (!isempty) {
-						stack.push(cur);
-						cur = child;
-					}
-				} else cur = stack.pop();
-			} else throw("Parse Error: " + str);
-		} else {
-			if ((t = str.match(/^([^<]+)/))) cur.appendChild(document.createTextNode(text(t[0])));
-		}
-		str = str.substring(t[0].length);
-	}
-
-	function text (str) {
-		return str
-			.replace(/&(#(x)?)?([^;]+);/g, function (_, isNumRef, isHex, ref) {
-				return isNumRef ? String.fromCharCode(parseInt(ref, isHex ? 16 : 10)):
-				                  {"lt":"<","gt":"<","amp":"&"}[ref];
-			})
-			.replace(/#\{([^}]+)\}/g, function (_, name) {
-				return (typeof(opts.data[name]) == "undefined") ? _ : opts.data[name];
-			});
-	}
-
-	return root;
-}
-
 
 function log (m) {
 	if (!AutoPagerize.DEBUG) return;
@@ -960,17 +870,6 @@ function log (m) {
 	}
 	location.href = "javascript:(function () { if (window.console) console.log.apply(console.log, "+uneval(o)+") })();";
 }
-
-function duration (str) {
-	var ret = 0, map = {
-		sec : 1000, min : 60000, hour : 3600000, day : 86400000, week : 604800000, month : 2592000000, year : 31536000000
-	};
-	str.replace(/([-+]?\d+)\s*((?:m(?:illi)?)?sec|min|hour|day|week|month|year|)/g, function (_, num, unit) {
-		ret += +num * (map[unit] || 1);
-	});
-	return ret;
-}
-
 
 function h (s) {
 	var d = document.createElement("div");
@@ -1025,248 +924,4 @@ function $X (exp, context, type /* want type */) {
 		default: throw(TypeError("$X: specified type is not valid type."));
 	}
 }
-
-// Usage:: with (D()) { your code }
-// JSDeferred 0.2.2 (c) Copyright (c) 2007 cho45 ( www.lowreal.net )
-// See http://coderepos.org/share/wiki/JSDeferred
-function D () {
-
-
-function Deferred () { return (this instanceof Deferred) ? this.init(this) : new Deferred() }
-Deferred.prototype = {
-	init : function () {
-		this._next    = null;
-		this.callback = {
-			ok: function (x) { return x },
-			ng: function (x) { throw  x }
-		};
-		return this;
-	},
-
-	next  : function (fun) { return this._post("ok", fun) },
-	error : function (fun) { return this._post("ng", fun) },
-	call  : function (val) { return this._fire("ok", val) },
-	fail  : function (err) { return this._fire("ng", err) },
-
-	cancel : function () {
-		(this.canceller || function () {})();
-		return this.init();
-	},
-
-	_post : function (okng, fun) {
-		this._next = new Deferred();
-		this._next.callback[okng] = fun;
-		return this._next;
-	},
-
-	_fire : function (okng, value) {
-		var next = "ok";
-		try {
-			value = this.callback[okng].call(this, value);
-		} catch (e) {
-			next  = "ng";
-			value = e;
-		}
-		if (value instanceof Deferred) {
-			value._next = this._next;
-		} else {
-			if (this._next) this._next._fire(next, value);
-		}
-		return this;
-	}
-};
-
-Deferred.parallel = function (dl) {
-	var ret = new Deferred(), values = {}, num = 0;
-	for (var i in dl) if (dl.hasOwnProperty(i)) {
-		(function (d, i) {
-			d.next(function (v) {
-				values[i] = v;
-				if (--num <= 0) {
-					if (dl instanceof Array) {
-						values.length = dl.length;
-						values = Array.prototype.slice.call(values, 0);
-					}
-					ret.call(values);
-				}
-			}).error(function (e) {
-				ret.fail(e);
-			});
-			num++;
-		})(dl[i], i);
-	}
-	if (!num) Deferred.next(function () { ret.call() });
-	ret.canceller = function () {
-		for (var i in dl) if (dl.hasOwnProperty(i)) {
-			dl[i].cancel();
-		}
-	};
-	return ret;
-};
-
-Deferred.wait = function (n) {
-	var d = new Deferred(), t = new Date();
-	var id = setTimeout(function () {
-		clearTimeout(id);
-		d.call((new Date).getTime() - t.getTime());
-	}, n * 1000);
-	d.canceller = function () { try { clearTimeout(id) } catch (e) {} };
-	return d;
-};
-
-Deferred.next = function (fun) {
-	var d = new Deferred();
-	var id = setTimeout(function () { clearTimeout(id); d.call() }, 0);
-	if (fun) d.callback.ok = fun;
-	d.canceller = function () { try { clearTimeout(id) } catch (e) {} };
-	return d;
-};
-
-Deferred.call = function (f, args) {
-	args = Array.prototype.slice.call(arguments);
-	f    = args.shift();
-	return Deferred.next(function () {
-		return f.apply(this, args);
-	});
-};
-
-Deferred.loop = function (n, fun) {
-	var o = {
-		begin : n.begin || 0,
-		end   : (typeof n.end == "number") ? n.end : n - 1,
-		step  : n.step  || 1,
-		last  : false,
-		prev  : null
-	};
-	var ret, step = o.step;
-	return Deferred.next(function () {
-		function _loop (i) {
-			if (i <= o.end) {
-				if ((i + step) > o.end) {
-					o.last = true;
-					o.step = o.end - i + 1;
-				}
-				o.prev = ret;
-				ret = fun.call(this, i, o);
-				if (ret instanceof Deferred) {
-					return ret.next(function (r) {
-						ret = r;
-						return Deferred.call(_loop, i + step);
-					});
-				} else {
-					return Deferred.call(_loop, i + step);
-				}
-			} else {
-				return ret;
-			}
-		}
-		return (o.begin <= o.end) ? Deferred.call(_loop, o.begin) : null;
-	});
-};
-
-Deferred.register = function (name, fun) {
-	this.prototype[name] = function () {
-		return this.next(Deferred.wrap(fun).apply(null, arguments));
-	};
-};
-
-Deferred.wrap = function (dfun) {
-	return function () {
-		var a = arguments;
-		return function () {
-			return dfun.apply(null, a);
-		};
-	};
-};
-
-Deferred.register("loop", Deferred.loop);
-Deferred.register("wait", Deferred.wait);
-
-Deferred.define = function (obj, list) {
-	if (!list) list = ["parallel", "wait", "next", "call", "loop"];
-	if (!obj)  obj  = (function getGlobal () { return this })();
-	for (var i = 0; i < list.length; i++) {
-		var n = list[i];
-		obj[n] = Deferred[n];
-	}
-	return Deferred;
-};
-
-
-
-function xhttp (opts) {
-	var d = Deferred();
-	if (opts.onload)  d = d.next(opts.onload);
-	if (opts.onerror) d = d.error(opts.onerror);
-	opts.onload = function (res) {
-		d.call(res);
-	};
-	opts.onerror = function (res) {
-		d.fail(res);
-	};
-	setTimeout(function () {
-		GM_xmlhttpRequest(opts);
-	}, 0);
-	return d;
-}
-xhttp.get  = function (url)       { return xhttp({method:"get",  url:url}) };
-xhttp.post = function (url, data) { return xhttp({method:"post", url:url, data:data, headers:{"Content-Type":"application/x-www-form-urlencoded"}}) };
-
-
-function http (opts) {
-	var d = Deferred();
-	var req = new XMLHttpRequest();
-	req.open(opts.method, opts.url, true);
-	if (opts.headers) {
-		for (var k in opts.headers) if (opts.headers.hasOwnProperty(k)) {
-			req.setRequestHeader(k, opts.headers[k]);
-		}
-	}
-	req.onreadystatechange = function () {
-		if (req.readyState == 4) d.call(req);
-	};
-	req.send(opts.data || null);
-	d.xhr = req;
-	return d;
-}
-http.get   = function (url)       { return http({method:"get",  url:url}) };
-http.post  = function (url, data) { return http({method:"post", url:url, data:data, headers:{"Content-Type":"application/x-www-form-urlencoded"}}) };
-http.jsonp = function (url, params) {
-	if (!params) params = {};
-
-	var Global = (function () { return this })();
-	var d = Deferred();
-	var cbname = params["callback"];
-	if (!cbname) do {
-		cbname = "callback" + String(Math.random()).slice(2);
-	} while (typeof(Global[cbname]) != "undefined");
-
-	params["callback"] = cbname;
-
-	url += (url.indexOf("?") == -1) ? "?" : "&";
-
-	for (var name in params) if (params.hasOwnProperty(name)) {
-		url = url + encodeURIComponent(name) + "=" + encodeURIComponent(params[name]) + "&";
-	}
-
-	var script = document.createElement('script');
-	script.type    = "text/javascript";
-	script.charset = "utf-8";
-	script.src     = url;
-	document.body.appendChild(script);
-
-	Global[cbname] = function callback (data) {
-		delete Global[cbname];
-		document.body.removeChild(script);
-		d.call(data);
-	};
-	return d;
-};
-
-Deferred.Deferred = Deferred;
-Deferred.http     = http;
-Deferred.xhttp    = xhttp;
-return Deferred;
-}// End of JSDeferred
-
 })();
