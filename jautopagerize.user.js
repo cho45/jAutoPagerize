@@ -308,20 +308,17 @@ AutoPagerize.loadNext = function () {
 AutoPagerize.updateStatus = function () {
 	var i = AutoPagerize.icon;
 
-	if (AutoPagerize._error) {
-		i.innerHTML = AutoPagerize._error;
-		i.className = "error";
-	} else
+
 	if (AutoPagerize._terminate) {
-		i.innerHTML = AutoPagerize._currentPage;
-		i.className = "terminated";
+		AutoPagerize.info.message(AutoPagerize._currentPage);
+		AutoPagerize.info.status("terminated");
 	} else
 	if (AutoPagerize._loading) {
-		i.innerHTML = "loading...";
-		i.className = "loading";
+		AutoPagerize.info.message("loading...");
+		AutoPagerize.info.status("loading");
 	} else {
-		i.innerHTML = AutoPagerize._currentPage;
-		i.className = AutoPagerize.enable ? "on" : "off";
+		AutoPagerize.info.message(AutoPagerize._currentPage);
+		AutoPagerize.info.status(AutoPagerize.enable ? "on" : "off");
 	}
 };
 
@@ -333,7 +330,7 @@ AutoPagerize.clearCache = function () {
 };
 
 AutoPagerize.log = function (str) {
-	AutoPagerize.icon.innerHTML = str;
+	AutoPagerize.info.log(str);
 	wait(2).next(function () {
 		AutoPagerize.updateStatus();
 	});
@@ -383,34 +380,6 @@ AutoPagerize.applyStyle = function () {
 				"-moz-border-radius: 1em !important;",
 				"opacity     : 0.5",
 			"}",
-			"#autopagerize_icon {",
-				"font-size   : 0.7em;",
-				"position    : fixed;",
-				"top         : 0;",
-				"right       : 0;",
-				"margin      : 0.3em;",
-				"padding     : 0 1em;",
-				"color       : #fff;",
-				"z-index     : 9999;",
-				"font-weight : bold;",
-				"line-height : 1.33;",
-				"cursor      : pointer;",
-			"}",
-			"#autopagerize_icon.on {",
-				"background  : " + AutoPagerize.Config.color.on + " !important;",
-			"}",
-			"#autopagerize_icon.off {",
-				"background  : " + AutoPagerize.Config.color.off + " !important;",
-			"}",
-			"#autopagerize_icon.loading {",
-				"background  : " + AutoPagerize.Config.color.loading + " !important;",
-			"}",
-			"#autopagerize_icon.terminated {",
-				"background  : " + AutoPagerize.Config.color.terminated + " !important;",
-			"}",
-			"#autopagerize_icon.error {",
-				"background  : " + AutoPagerize.Config.color.error + " !important;",
-			"}",
 		"</style>"
 		].join("\n"),
 		{
@@ -441,7 +410,6 @@ AutoPagerize.init = function (opts) {
 	AutoPagerize._opts         = opts;
 	AutoPagerize._loading      = false;
 	AutoPagerize._terminate    = false;
-	AutoPagerize._error        = null;
 	AutoPagerize._pageinfo     = {};
 	AutoPagerize._nextURI      = null;
 	AutoPagerize._insertBefore = null;
@@ -510,16 +478,15 @@ AutoPagerize.init = function (opts) {
 		if (!autopagerizeEnabled) return null;
 		var initialize_time = (new Date()).getTime() - initialize_time.getTime();
 
-		AutoPagerize.icon = $E("<div id='autopagerize_icon'/>", { parent: document.body });
-		AutoPagerize.icon.addEventListener("click", opts.onIconClick || function () {}, false);
+		AutoPagerize.info = new Info();
 		AutoPagerize.applyStyle();
 		AutoPagerize.considerInsertOffset();
 
-		AutoPagerize.icon.title = [
-			"SiteInfo: [", AutoPagerize._pageinfo.url, "] / ",
-			"Size: ", r.length, " / ",
-			"Initialized: ", initialize_time / 1000, "sec"
-		].join("");
+		AutoPagerize.info.initInfo({
+			siteinfo  : AutoPagerize._pageinfo.url,
+			wholesize : r.length,
+			inittime  : initialize_time / 1000
+		});
 
 		AutoPagerize.updateStatus();
 
@@ -564,7 +531,86 @@ for (var i in AutoPagerize) if (AutoPagerize.hasOwnProperty(i)) {
 	}
 }
 
+Info = function () { this.init.apply(this, arguments) };
+Info.prototype = {
+	iconSet : {
+		on         : "http://reader.livedoor.com/img/icon/rest3.gif",
+		off        : "http://reader.livedoor.com/img/icon/rest1.gif",
+		loading    : "http://reader.livedoor.com/img/icon/loading.gif",
+		terminated : "http://reader.livedoor.com/img/icon/rest2.gif",
+		error      : "http://reader.livedoor.com/img/icon/rest2.gif"
+	},
 
+	init : function (parent) {
+		if (typeof(parent) == "undefined") parent = document.body;
+		this.container = $E(<>
+			<div class='window'>
+				<div class='whole'>
+					<img src={this.iconSet.loading} class="runner"/>
+					<div class='message'>
+						loading
+					</div>
+				</div>
+			</div>
+		</>.toXMLString(), {
+			parent : parent
+		});		resetStyle(this.container, <><![CDATA[
+			._.window {
+				position: fixed;
+				top: 0;
+				right: 0;
+				z-index: 99999;
+				border: 1px solid #ccc;
+				-moz-border-radius: 3px;
+				padding: 0 5px 3px;
+				margin: 3px;
+				line-height: 1.66;
+				font-size: 10px;
+				color: #333;
+			}
+			._ .runner {
+				display: inline;
+				vertical-align: text-bottom;
+			}
+			._ .message {
+				display: inline;
+			}
+			._ .message:before {
+				color: #999;
+				content: "< "
+			}
+			._ input {
+				display: inline;
+				border: 0.3em solid #ccc;
+				-moz-border-radius: 1em;
+				width: 7em;
+				padding: 0.2em 0;
+				text-align: center;
+				margin: 0 0.5em;
+			}
+		]]></>.toString());
+	},
+
+	icon : function (url) {
+		this.container.runner.src = url;
+	},
+
+	message : function (message) {
+		this.container.message.innerHTML = message;
+	},
+
+	status : function (status) {
+		this.container.whole.className = status;
+		this.icon(this.iconSet[status]);
+	},
+
+	initInfo : function (info) {
+		log(info);
+	},
+	
+	log : function () {
+	}
+};
 
 var XPathGenerator = {
 	open : function () {
