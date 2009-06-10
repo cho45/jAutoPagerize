@@ -7,6 +7,7 @@
 // @exclude     http://b.hatena.ne.jp/*
 // @require     http://svn.coderepos.org/share/lang/javascript/jsdeferred/trunk/jsdeferred.userscript.js
 // @require     http://svn.coderepos.org/share/lang/javascript/jsenumerator/trunk/jsenumerator.nodoc.js
+// @require     http://gist.github.com/3238.txt#$X
 // @require     http://gist.github.com/3239.txt#createElementFromString
 // @require     http://gist.github.com/46391.txt#duration
 // @require     http://gist.github.com/49453.txt#createHTMLDocument
@@ -112,30 +113,21 @@ window.AutoPagerize = {
 	addFilter : AutoPagerize.addFilter
 };
 
-function getResource (uri, convertfun) {
+function getHTMLResource (uri) {
 	var d = Deferred();
-	if (!convertfun) convertfun = function (i) { return i };
-	log("Getting Resource: "+uri);
-	GM_xmlhttpRequest({
-		method  : "GET",
-		url     : absoluteURI(uri),
-		overrideMimeType: 'text/html; charset=' + document.characterSet,
-		headers: {
-			"User-Agent": navigator.userAgent + " Greasemonkey (" + AutoPagerize.VERSION + ")"
-		},
-		onload  : function (req) { try {
-			var res = convertfun(req.responseText);
-			d.call(res);
-		} catch (e) { d.fail(e) } },
-		onerror : function (e) {
-			d.fail(e);
+	var iframe = $E("<iframe name='foobar' src='#{url}' style='display: none'></iframe>", {
+		parent: document.body,
+		data : {
+			url : absoluteURI(uri)
 		}
 	});
+	iframe.contentWindow.addEventListener("DOMContentLoaded", function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		d.call(iframe.contentDocument);
+		iframe.parentNode.removeChild(iframe);
+	}, true);
 	return d;
-}
-
-function getHTMLResource (uri) {
-	return getResource(uri, getHTMLResource.createDocumentFromString);
 }
 getHTMLResource.createDocumentFromString = function (s) {
 	var elements = /<(script|i?frame|object)[ \t\r\n<>][\S\s]*?<\/\1(?:[ \t\r\n]*>|[ \t\r\n]+)/;
@@ -295,6 +287,11 @@ AutoPagerize.loadNext = function () {
 				var orig_display = style.display;
 				style.display = "none";
 
+				timers.push( wait(img ? 2 : 0.1).next(function () {
+					sep.style.display = "block";
+					style.display = orig_display
+				}) );
+
 				// Cache
 				var elements = $X(".//img[@src]", i, Array);
 				var img;
@@ -309,65 +306,6 @@ AutoPagerize.loadNext = function () {
 				for (var j = 0, len = elements.length; j < len; j++) {
 					elements[j].target = "_blank";
 				}
-
-				// Restore hidden script elements
-				var elements = $X(".//textarea[@class = '_autopagerize_hidden_element']", i, Array);
-				loop(elements.length, function (j) {
-					var ele    = elements[j];
-					var source = ele.value;
-					log(source);
-					if (/^<script/i.test(source)) {
-						var orig_write = unsafeWindow.document.write;
-						var temp       = document.createElement("div");
-						var written    = [];
-
-						unsafeWindow.document.write = function (str) {
-							written.push(str);
-						};
-
-						temp.innerHTML = source;
-						log(source);
-						if (/googlesyndication/.test(source)) return null;
-
-						var script = temp.getElementsByTagName("script")[0];
-
-						var deferred = Deferred();
-						script.addEventListener("load", function (e) {
-							unsafeWindow.document.write = orig_write;
-							temp.innerHTML = written.join("");
-							deferred.call(e);
-						}, false);
-						script.addEventListener("error", function (e) {
-							unsafeWindow.document.write = orig_write;
-							temp.innerHTML = written.join("");
-							deferred.fail(e);
-						}, false);
-
-						ele.parentNode.insertBefore(temp, ele);
-						ele.parentNode.removeChild(ele);
-
-						// alert(written.join(""));
-						if (script.src) {
-							return deferred;
-						} else {
-							unsafeWindow.document.write = orig_write;
-							temp.innerHTML = written.join("");
-						}
-					} else
-					if (/^<(?:iframe|object)/i.test(source)) {
-						var r = document.createRange();
-						r.selectNodeContents(document.body);
-						ele.parentNode.replaceChild(r.createContextualFragment(source), ele);
-					} else {
-					}
-					return null;
-				}).error(AutoPagerize.errorHandler);
-
-				//
-				timers.push( wait(img ? 2 : 0.1).next(function () {
-					sep.style.display = "block";
-					style.display = orig_display
-				}) );
 			}
 
 			pib.insertBefore(i, ib);
@@ -537,7 +475,7 @@ AutoPagerize.init = function (opts) {
 						break;
 					case 'HTML':
 					default:
-						var d = getHTMLResource.createDocumentFromString(data);
+						var d = createDocumentFromString(data);
 						$X(".//*[@class='autopagerize_data']", d).forEach(function (e) {
 							// using replace as scan and folding key/value to i
 							var i = {}; e.value.replace(/^\s*([^:\s]+)\s*:\s*(.*)$/gm, function (m, key, value) {
@@ -871,57 +809,33 @@ function log (m) {
 	location.href = "javascript:(function () { if (window.console) console.log.apply(console.log, "+uneval(o)+") })();";
 }
 
+function getResource (uri, convertfun) {
+	var d = Deferred();
+	if (!convertfun) convertfun = function (i) { return i };
+	log("Getting Resource: "+uri);
+	GM_xmlhttpRequest({
+		method  : "GET",
+		url     : absoluteURI(uri),
+		overrideMimeType: 'text/html; charset=' + document.characterSet,
+		headers: {
+			"User-Agent": navigator.userAgent + " Greasemonkey (" + AutoPagerize.VERSION + ")"
+		},
+		onload  : function (req) { try {
+			var res = convertfun(req.responseText);
+			d.call(res);
+		} catch (e) { d.fail(e) } },
+		onerror : function (e) {
+			d.fail(e);
+		}
+	});
+	return d;
+}
+
+
 function h (s) {
 	var d = document.createElement("div");
 	d.innerHTML = s;
 	return d;
 }
 
-// modified $X for relative path extension.
-function $X (exp, context, type /* want type */) {
-	if (arguments.callee.forceRelative || navigator.userAgent.indexOf("Safari/523.12") != -1)
-		exp = exp.replace(/id\(\s*(["'])([^"']+)\1\s*\)/g, '//*[@id="$2"]');
-	if (arguments.callee.forceRelative)
-		exp = exp.indexOf("(//") == 0
-		    ? "(.//" + exp.substring(3)
-		    : (exp[0] == "/" ? "." : "./") + exp;
-	log("XPath: " + exp);
-
-	if (typeof context == "function") {
-		type    = context;
-		context = null;
-	}
-	if (!context) context = document;
-	exp = (context.ownerDocument || context).createExpression(exp, function (prefix) {
-		return (document.createNSResolver((context.ownerDocument == null
-			? context : context.ownerDocument).documentElement)
-			.lookupNamespaceURI(prefix) || document.documentElement.namespaceURI);
-	});
-
-	switch (type) {
-		case String: return exp.evaluate(context, XPathResult.STRING_TYPE, null).stringValue;
-		case Number: return exp.evaluate(context, XPathResult.NUMBER_TYPE, null).numberValue;
-		case Boolean: return exp.evaluate(context, XPathResult.BOOLEAN_TYPE, null).booleanValue;
-		case Array:
-			var result = exp.evaluate(context, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-			for (var ret = [], i = 0, len = result.snapshotLength; i < len; i++) {
-				ret.push(result.snapshotItem(i));
-			}
-			return ret;
-		case undefined:
-			var result = exp.evaluate(context, XPathResult.ANY_TYPE, null);
-			switch (result.resultType) {
-				case XPathResult.STRING_TYPE : return result.stringValue;
-				case XPathResult.NUMBER_TYPE : return result.numberValue;
-				case XPathResult.BOOLEAN_TYPE: return result.booleanValue;
-				case XPathResult.UNORDERED_NODE_ITERATOR_TYPE:
-					// not ensure the order.
-					var ret = [], i = null;
-					while ((i = result.iterateNext())) ret.push(i);
-					return ret;
-			}
-			return null;
-		default: throw(TypeError("$X: specified type is not valid type."));
-	}
-}
 })();

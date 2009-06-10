@@ -7,3 +7,6 @@
 [submodule "snippets/createHTMLDocument"]
 	path = snippets/createHTMLDocument
 	url = git://gist.github.com/49453.git
+[submodule "snippets/dollarX"]
+	path = snippets/dollarX
+	url = git://gist.github.com/3238.git
