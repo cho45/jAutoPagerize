@@ -533,40 +533,42 @@ for (var i in AutoPagerize) if (AutoPagerize.hasOwnProperty(i)) {
 
 Info = function () { this.init.apply(this, arguments) };
 Info.prototype = {
-	iconSet : {
-		on         : "http://reader.livedoor.com/img/icon/rest3.gif",
-		off        : "http://reader.livedoor.com/img/icon/rest1.gif",
-		loading    : "http://reader.livedoor.com/img/icon/loading.gif",
-		terminated : "http://reader.livedoor.com/img/icon/rest2.gif",
-		error      : "http://reader.livedoor.com/img/icon/rest2.gif"
-	},
-
 	init : function (parent) {
 		if (typeof(parent) == "undefined") parent = document.body;
 		this.container = $E(<>
 			<div class='window'>
 				<div class='whole'>
-					<img src={this.iconSet.loading} class="runner"/>
 					<div class='message'>
 						loading
 					</div>
 				</div>
+				<div class='pallet' />
 			</div>
 		</>.toXMLString(), {
 			parent : parent
-		});		resetStyle(this.container, <><![CDATA[
+		});
+		
+		resetStyle(this.container, <><![CDATA[
 			._.window {
 				position: fixed;
 				top: 0;
 				right: 0;
 				z-index: 99999;
-				border: 1px solid #ccc;
-				-moz-border-radius: 3px;
-				padding: 0 5px 3px;
+				border: 2px solid #ccc;
+				-moz-border-radius: 1em;
 				margin: 3px;
 				line-height: 1.66;
-				font-size: 10px;
-				color: #333;
+				font-size: 9px;
+				background: #222;
+				color: #fff;
+			}
+			._.window * {
+				background: transparent;
+				color: inherit;
+			}
+			._.window > div {
+				padding: 0.2em 1em;
+				cursor: pointer;
 			}
 			._ .runner {
 				display: inline;
@@ -574,10 +576,10 @@ Info.prototype = {
 			}
 			._ .message {
 				display: inline;
-			}
-			._ .message:before {
-				color: #999;
-				content: "< "
+				text-align: center;
+				font-weight: bold;
+				background: inherit;
+				cursor: pointer;
 			}
 			._ input {
 				display: inline;
@@ -589,10 +591,16 @@ Info.prototype = {
 				margin: 0 0.5em;
 			}
 		]]></>.toString());
+
+		this.bindEvents();
 	},
 
-	icon : function (url) {
-		this.container.runner.src = url;
+	bindEvents : function () {
+		var self = this;
+		self.container.whole.addEventListener("click", function (e) {
+			if (!self.container.pallet.childNodes.length) {
+			}
+		}, false);
 	},
 
 	message : function (message) {
@@ -601,7 +609,6 @@ Info.prototype = {
 
 	status : function (status) {
 		this.container.whole.className = status;
-		this.icon(this.iconSet[status]);
 	},
 
 	initInfo : function (info) {
@@ -714,11 +721,7 @@ var XPathGenerator = {
 };
 
 // Run!
-AutoPagerize.init({
-	onIconClick : function () {
-		XPathGenerator.toggle();
-	}
-});
+AutoPagerize.init({});
 
 var ev = document.createEvent('Events');
 ev.initEvent('GM_AutoPagerizeLoaded', false, true);
