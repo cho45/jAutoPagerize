@@ -813,6 +813,17 @@ function getResource (uri, convertfun) {
 	return d;
 }
 
+function createDocumentFromString (s) {
+	s = String(s).replace(/<script[ \t\r\n<>][\S\s]*?<\/script(?:[ \t\r\n]*>|[ \t\r\n]+)|<(?:i?frame|html|object|script)(?:[ \t\r\n][^<>]*(?:>|(?=<))|[ \t\r\n]*>)|<\/(?:i?frame|html|object|script)(?:[ \t\r\n]*>|[ \t\r\n]+)/gi, "");
+	var d = createHTMLDocument();
+	var child, root = d.documentElement;
+	while ((child = root.firstChild)) root.removeChild(child);
+	var r = d.createRange();
+	r.selectNodeContents(root);
+	root.appendChild(r.createContextualFragment(s));
+	return d;
+}
+
 
 function h (s) {
 	var d = document.createElement("div");
