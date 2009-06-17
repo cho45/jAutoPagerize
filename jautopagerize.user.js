@@ -50,6 +50,11 @@ AutoPagerize.Config  = {
 		  , insertBefore : 'id("more")'
 		  , pageElement  : '!click'
 		  }
+		, { url          : '^http://h\\.hatena\\.ne\\.jp/'
+		  , nextLink     : '//a[@rel="next"]'
+		  , insertBefore : '//div[@class="pager"]'
+		  , pageElement  : '!click'
+		  }
 		, { url          : '^http://images\\.google\\.(?:co\\.jp|com)/images\\?'
 		  , nextLink     : '//td[@class="b"]/a'
 		  , insertBefore : ''
