@@ -29,7 +29,6 @@ AutoPagerize.VERSION = "jAutoPagerize $Rev: 33889+? $";
 AutoPagerize.Config  = {
 	  site_info_urls : [
 		  { format : 'JSON', url : 'http://wedata.net/databases/AutoPagerize/items.json' }
-		, { format : 'JSON', url : 'http://utatane.appjet.net/databases/AutoPagerize/items.json' }
 		, { format : 'HTML', url : 'http://swdyh.infogami.com/autopagerize' }
 		//, { format : 'HTML', url : 'http://userjs.oh.land.to/pagerization/convert.php?file=siteinfo.v5' }
 	]
@@ -456,21 +455,25 @@ AutoPagerize.init = function (opts) {
 		AutoPagerize.Config.site_info_urls.map(function (url_info) {
 			function parseSiteInfo (data) {
 				var siteinfo = [];
-				switch (url_info.format.toUpperCase()) {
-					case 'JSON':
-						siteinfo = eval(data).map(function(i) { return i.data });
-						break;
-					case 'HTML':
-					default:
-						var d = createDocumentFromString(data);
-						$X(".//*[@class='autopagerize_data']", d).forEach(function (e) {
-							// using replace as scan and folding key/value to i
-							var i = {}; e.value.replace(/^\s*([^:\s]+)\s*:\s*(.*)$/gm, function (m, key, value) {
-								i[key] = value;
+				try {
+					switch (url_info.format.toUpperCase()) {
+						case 'JSON':
+							siteinfo = eval(data).map(function(i) { return i.data });
+							break;
+						case 'HTML':
+						default:
+							var d = createDocumentFromString(data);
+							$X(".//*[@class='autopagerize_data']", d).forEach(function (e) {
+								// using replace as scan and folding key/value to i
+								var i = {}; e.value.replace(/^\s*([^:\s]+)\s*:\s*(.*)$/gm, function (m, key, value) {
+									i[key] = value;
+								});
+								siteinfo.push(i);
 							});
-							siteinfo.push(i);
-						});
-						break;
+							break;
+					}
+				} catch (e) {
+					alert(e);
 				}
 				return siteinfo;
 			}
