@@ -295,10 +295,18 @@ AutoPagerize.loadNext = function () {
 			}
 
 			pib.insertBefore(i, ib);
+
+			var ev = document.createEvent("MutationEvent");
+			ev.initMutationEvent("AutoPagerize_DOMNodeInserted", true, false, pib, null, absoluteURI(AutoPagerize._nextURI), null, null);
+			i.dispatchEvent(ev);
 			return i.wrappedJSObject || i;
 		});
 		AutoPagerize.filters.forEach(function (f) { try { f(pages) } catch (e) { log(e) } });
 		AutoPagerize._nextURI = ($X(AutoPagerize._pageinfo.nextLink, r)[0] || {}).href;
+
+		var ev = document.createEvent("Event");
+		ev.initEvent("GM_AutoPagerizeNextPageLoaded", true, true);
+		document.dispatchEvent(ev);
 
 		return parallel(timers).next(function () {
 			AutoPagerize._loading = false;
