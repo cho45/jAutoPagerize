@@ -5,6 +5,7 @@
 // @include     http://*
 // @include     https://*
 // @exclude     http://b.hatena.ne.jp/*
+// @exclude     http://f.hatena.ne.jp/*/20*
 // @require     http://svn.coderepos.org/share/lang/javascript/jsdeferred/trunk/jsdeferred.userscript.js
 // @require     http://svn.coderepos.org/share/lang/javascript/jsenumerator/trunk/jsenumerator.nodoc.js
 // @require     http://gist.github.com/3238.txt#$X
@@ -55,7 +56,7 @@ AutoPagerize.Config  = {
 		  , pageElement  : '!click'
 		  }
 		, { url          : '^http://images\\.google\\.(?:co\\.jp|com)/images\\?'
-		  , nextLink     : '//td[@class="b"]/a'
+		  , nextLink     : '(//td[@class="b"]/a)[last()]'
 		  , insertBefore : ''
 		  , pageElement  : 'id("ImgContent")'
 		  }
@@ -133,7 +134,8 @@ function getHTMLResource (uri) {
 	iframe.contentWindow.addEventListener("DOMContentLoaded", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
-		d.call(iframe.contentDocument);
+		iframe.contentWindow.removeEventListener("DOMContentLoaded", arguments.callee, true);
+		d.call(iframe.contentDocument.wrappedJSObject);
 		iframe.parentNode.removeChild(iframe);
 	}, true);
 	return d;
@@ -299,6 +301,7 @@ AutoPagerize.loadNext = function () {
 		});
 		AutoPagerize.filters.forEach(function (f) { try { f(pages) } catch (e) { log(e) } });
 		AutoPagerize._nextURI = ($X(AutoPagerize._pageinfo.nextLink, r)[0] || {}).href;
+		log($X(AutoPagerize._pageinfo.nextLink, r))
 
 		return parallel(timers).next(function () {
 			AutoPagerize._loading = false;
@@ -792,11 +795,7 @@ function log (m) {
 	var o = Array.prototype.concat.apply([], arguments);
 	if (unsafeWindow.console) {
 		unsafeWindow.console.log(o.join(", "));
-	} else
-	if (GM_log) {
-		GM_log(o);
 	}
-	location.href = "javascript:(function () { if (window.console) console.log.apply(console.log, "+uneval(o)+") })();";
 }
 
 function getResource (uri, convertfun) {
