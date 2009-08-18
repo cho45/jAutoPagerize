@@ -209,7 +209,7 @@ AutoPagerize.loadNext = function () {
 	AutoPagerize.updateStatus();
 
 	if (AutoPagerize._nextURI == "!click") {
-		var e = document.createEvent("MouseEvents");
+		var e = document.createEvent("MouseEvent");
 		with ({
 			type      : 'click',
 			canBubble : true,
@@ -308,7 +308,7 @@ AutoPagerize.loadNext = function () {
 		log($X(AutoPagerize._pageinfo.nextLink, r))
 
 		var ev = document.createEvent("Event");
-		ev.initEvent("GM_AutoPagerizeNextPageLoaded", true, true);
+		ev.initEvent("GM_AutoPagerizeNextPageLoaded", true, false);
 		document.dispatchEvent(ev);
 
 		return parallel(timers).next(function () {
@@ -692,9 +692,9 @@ AutoPagerize.init({
 	}
 });
 
-var ev = document.createEvent('Events');
-ev.initEvent('GM_AutoPagerizeLoaded', false, true);
-window.dispatchEvent(ev);
+var ev = document.createEvent('Event');
+ev.initEvent('GM_AutoPagerizeLoaded', true, false);
+document.dispatchEvent(ev);
 
 // register menu for clearing cache
 GM_registerMenuCommand('jAutoPagerize - clear cache', AutoPagerize.clearCache);
