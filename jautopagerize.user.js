@@ -251,7 +251,7 @@ AutoPagerize.loadNext = function () {
 		var sep = $E([
 			"<div class='_autopagerize'><p>",
 				"<a href='#{bookmark}'>-- \u2702 --</a>",
-				"AutoPagerized: <a href='#{next}' target='_blank'>#{next}</a>",
+				"AutoPagerized: <a href='#{next}' target='_blank' class='autopagerize_link'>#{next}</a>",
 				"<a href='#{bookmark}'>-- \u2702 --</a>",
 			"</p></div>"
 			].join(" "),
