@@ -248,6 +248,7 @@ AutoPagerize.loadNext = function () {
 
 		var ib  = AutoPagerize._insertBefore;
 		var pib = ib.parentNode;
+		var uri = absoluteURI(AutoPagerize._nextURI);
 		var sep = $E([
 			"<div class='_autopagerize'><p>",
 				"<a href='#{bookmark}'>-- \u2702 --</a>",
@@ -257,7 +258,7 @@ AutoPagerize.loadNext = function () {
 			].join(" "),
 			{
 				data : {
-					next : absoluteURI(AutoPagerize._nextURI),
+					next : uri,
 					bookmark: "#_autopagerize_page" + (AutoPagerize._currentPage + 1)
 				}
 			}
@@ -294,12 +295,14 @@ AutoPagerize.loadNext = function () {
 				for (var j = 0, len = elements.length; j < len; j++) {
 					elements[j].target = "_blank";
 				}
+
+				i.setAttribute("data-autopagerize-page-url", uri);
 			}
 
 			pib.insertBefore(i, ib);
 
 			var ev = document.createEvent("MutationEvent");
-			ev.initMutationEvent("AutoPagerize_DOMNodeInserted", true, false, pib, null, absoluteURI(AutoPagerize._nextURI), null, null);
+			ev.initMutationEvent("AutoPagerize_DOMNodeInserted", true, false, pib, null, uri, null, null);
 			i.dispatchEvent(ev);
 			return i.wrappedJSObject || i;
 		});
