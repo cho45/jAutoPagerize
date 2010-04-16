@@ -498,8 +498,8 @@ AutoPagerize.init = function (opts) {
 		})
 	).
 	next(function (r) {
+		r.unshift(AutoPagerize.Config.microformats);
 		r.unshift(AutoPagerize.Config.site_info);
-		r.push(AutoPagerize.Config.microformats);
 		r = r.reduce(function (r, i) { return r.concat(i) });
 
 		var initialize_time = new Date();
@@ -511,6 +511,7 @@ AutoPagerize.init = function (opts) {
 				if (info.url && info.nextLink && info.pageElement && location.href.match(info.url) && !!$X(info.nextLink)[0]) {
 					AutoPagerize._pageinfo = info;
 					AutoPagerize._nextURI  = (info.pageElement == "!click") ? "!click" : ($X(info.nextLink)[0] || {}).href;
+					console.log(info);
 					if (!info.insertBefore) {
 						var lastPageElement = $X(AutoPagerize._pageinfo.pageElement).pop();
 						if (lastPageElement) AutoPagerize._insertBefore =
@@ -801,6 +802,8 @@ function absoluteURI (uri) {
 
 function log (m) {
 	if (!AutoPagerize.DEBUG) return;
+	if (!/firebug/.test(uneval(unsafeWindow.console))) return;
+
 //		var c = unsafeWindow.console;
 //		if (c) c.log.apply(c, arguments);
 	var o = Array.prototype.concat.apply([], arguments);
