@@ -3,6 +3,10 @@ jAutoPagerize
 
 ATDK
 
+## インストール
+
+ * http://github.com/cho45/jAutoPagerize/raw/master/jautopagerize.user.js
+
 ## 機能
 
  * スクロール時、自動的に次のページを読みこみます
