@@ -5,7 +5,7 @@ ATDK
 
 ## インストール
 
- * http://github.com/cho45/jAutoPagerize/raw/master/jautopagerize.user.js
+ * [http://github.com/cho45/jAutoPagerize/raw/master/jautopagerize.user.js]( http://github.com/cho45/jAutoPagerize/raw/master/jautopagerize.user.js )
 
 ## 機能
 
