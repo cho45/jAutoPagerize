@@ -487,7 +487,8 @@ AutoPagerize.init = function (opts) {
 							break;
 					}
 				} catch (e) {
-					alert(e);
+					console.log(e);
+					// alert(e);
 				}
 				return siteinfo;
 			}
@@ -571,7 +572,7 @@ AutoPagerize.init = function (opts) {
 };
 
 AutoPagerize.errorHandler = function (e, f) {
-	alert(String(e) + "///" + String(f));
+	// alert(String(e) + "///" + String(f));
 	if (unsafeWindow.console) unsafeWindow.console.log([e, f]);
 };
 
