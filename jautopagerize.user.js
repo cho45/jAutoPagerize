@@ -22,7 +22,6 @@
 //
 $E = createElementFromString;
 $A = Enumerator;
-if (window != window.parent) return;
 if (document.contentType.indexOf("html") == -1) return;
 
 AutoPagerize = {};
