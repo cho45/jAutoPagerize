@@ -30,7 +30,7 @@ AutoPagerize.VERSION = "jAutoPagerize $Rev: 33889+? $";
 AutoPagerize.Config  = {
 	  site_info_urls : [
 		  { format : 'JSON', url : 'http://wedata.net/databases/AutoPagerize/items.json' }
-		, { format : 'HTML', url : 'http://swdyh.infogami.com/autopagerize' }
+		//, { format : 'HTML', url : 'http://swdyh.infogami.com/autopagerize' }
 		//, { format : 'HTML', url : 'http://userjs.oh.land.to/pagerization/convert.php?file=siteinfo.v5' }
 	]
 	, site_info : [
