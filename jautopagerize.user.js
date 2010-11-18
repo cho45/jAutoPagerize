@@ -8,10 +8,10 @@
 // @exclude     http://f.hatena.ne.jp/*/20*
 // @require     http://svn.coderepos.org/share/lang/javascript/jsdeferred/trunk/jsdeferred.userscript.js
 // @require     http://svn.coderepos.org/share/lang/javascript/jsenumerator/trunk/jsenumerator.nodoc.js
-// @require     http://gist.github.com/3238.txt#$X
-// @require     http://gist.github.com/3239.txt#createElementFromString
-// @require     http://gist.github.com/46391.txt#duration
-// @require     http://gist.github.com/49453.txt#createHTMLDocument
+// @require     https://gist.github.com/3238.txt#$X
+// @require     https://gist.github.com/3239.txt#createElementFromString
+// @require     https://gist.github.com/46391.txt#duration
+// @require     https://gist.github.com/49453.txt#createHTMLDocument
 // ==/UserScript==
 // This script uses JavaScript 1.6 and 1.8 functions:
 //    Array.prototype.{filter,forEach,map,reduce} etc...
